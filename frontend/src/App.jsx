@@ -3,7 +3,7 @@ import axios from 'axios';
 import './App.css';
 
 // Use ngrok URL for phone testing
-const BACKEND_URL = 'https://9cab868cca7f.ngrok-free.app'; // Update with your ngrok URL
+const BACKEND_URL = 'hhttp://34.219.90.159:8501'; // Update with your ngrok URL
 
 function EliaApp() {
   const [isChatVisible, setIsChatVisible] = useState(false);
