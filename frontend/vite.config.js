@@ -17,7 +17,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   server: {
     host: '0.0.0.0', // Accessible externally
-    port: 5173,      // Default Vite port
+    port: 8501,      // Default Vite port
     // Remove or adjust allowedHosts since backend is on EC2
     // allowedHosts: ['.ngrok-free.app'] // Comment out or remove if not using ngrok
   },
