@@ -1,0 +1,11 @@
+Flask
+flask-cors
+werkzeug
+openai
+python-dotenv
+elevenlabs
+openai-whisper
+sounddevice
+scipy
+numpy
+openai-agents
