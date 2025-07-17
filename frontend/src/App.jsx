@@ -2,25 +2,24 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-// Use ngrok URL for phone testing
-const BACKEND_URL = 'hhttp://34.219.90.159:8501'; // Update with your ngrok URL
-
 function EliaApp() {
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
   const audioInputRef = useRef(null);
 
+  // Use environment variable for backend URL, fallback to localhost for development
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
   const handleTextSubmit = async () => {
     if (!input.trim()) return;
     const now = new Date();
     const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     try {
-      const response = await axios.post(`${BACKEND_URL}/text`, { text: input });
+      const response = await axios.post(`${backendUrl}/text`, { text: input });
       setMessages([...messages, { user: 'You', text: input, time: timestamp }, { user: 'ELIA', text: response.data.response, time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
       setInput('');
     } catch (error) {
-      console.error('Error submitting text:', error);
       setMessages([...messages, { user: 'You', text: input, time: timestamp }, { user: 'ELIA', text: 'Oops, something went wrong!', time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
     }
   };
@@ -33,21 +32,12 @@ function EliaApp() {
       mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
       mediaRecorder.onstop = async () => {
         const blob = new Blob(chunks, { type: 'audio/wav' });
-        console.log('Recorded blob:', blob, blob.type);
         const formData = new FormData();
-        formData.append('text', 'Voice input');
         formData.append('audio', blob, 'recording.wav');
         const now = new Date();
         const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        try {
-          const response = await axios.post(`${BACKEND_URL}/text`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-          setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
-        } catch (error) {
-          console.error('Error submitting voice:', error.response ? error.response.data : error.message);
-          setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: 'Error recording audio!', time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
-        }
+        const response = await axios.post(`${backendUrl}/text`, { text: 'Voice input (mock)' });
+        setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
       };
       mediaRecorder.start();
       setTimeout(() => mediaRecorder.stop(), 5000);
@@ -55,8 +45,7 @@ function EliaApp() {
     } catch (error) {
       const now = new Date();
       const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-      console.error('Error accessing microphone:', error);
-      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: 'Error accessing microphone!', time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
+      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: 'Error recording audio!', time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
     }
   };
 
@@ -66,13 +55,11 @@ function EliaApp() {
       const now = new Date();
       const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
       const formData = new FormData();
-      formData.append('text', 'Image input');
       formData.append('image', file);
       try {
-        const response = await axios.post(`${BACKEND_URL}/text`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        const response = await axios.post(`${backendUrl}/text`, { text: 'Image input (mock)' });
         setMessages([...messages, { user: 'You', text: 'Image uploaded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
       } catch (error) {
-        console.error('Error uploading image:', error);
         setMessages([...messages, { user: 'You', text: 'Image uploaded', time: timestamp }, { user: 'ELIA', text: 'Oops, something went wrong!', time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
       }
     }
@@ -85,8 +72,8 @@ function EliaApp() {
       setMessages([]);
     } else {
       setMessages([
-        { user: 'ELIA', text: 'Hello, Ryan! I’m ELIA, your professional health companion. Ready to optimize your wellness journey? 🌿', time: '01:37 AM' },
-        { user: 'ELIA', text: 'Ask me about exercises, diet, or upload an image for advice. Let’s get started! ⏰', time: '01:37 AM' }
+        { user: 'ELIA', text: 'Hello, Ryan! I’m ELIA, your professional health companion. Ready to optimize your wellness journey? 🌿', time: timestamp },
+        { user: 'ELIA', text: 'Ask me about exercises, diet, or upload an image for advice. Let’s get started! ⏰', time: timestamp }
       ]);
     }
   }, [isChatVisible]);
@@ -95,7 +82,7 @@ function EliaApp() {
     return (
       <div className="app">
         <div className="landing-container">
-          <img src="src/LandingPage.JPG" alt="Landing Page" className="landing-image" />
+          <img src="/images/your-landing-image.jpg" alt="Landing Page" className="landing-image" />
           <button className="chat-button" onClick={() => setIsChatVisible(true)}>Let's Chat</button>
         </div>
         <div className="nav-bar">
