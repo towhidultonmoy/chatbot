@@ -9,3 +9,4 @@ sounddevice
 scipy
 numpy
 openai-agents
+nest-asyncio
