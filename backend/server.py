@@ -289,7 +289,7 @@ def detect_foods_json(image_path):
 # -------------------- SPEECH TO TEXT -------------------- #
 warnings.filterwarnings("ignore", category=UserWarning)
 print("Loading Whisper model...")
-WHISPER_MODEL = whisper.load_model("base")
+WHISPER_MODEL = whisper.load_model("tiny")
 print("Model loaded.")
 
 # -------------------- TEXT TO SPEECH -------------------- #
