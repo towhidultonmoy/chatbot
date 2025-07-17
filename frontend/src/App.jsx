@@ -169,7 +169,6 @@ function EliaApp() {
         { user: 'ELIA', text: 'Ask me about exercises, diet, or upload an image for advice. Let’s get started! ⏰', time: timestamp }
       ];
       setMessages(initialMessages);
-      // Fetch audio for initial messages
       fetchInitialMessagesAudio(initialMessages[0].text).then((responseText) => {
         setMessages((prev) => [
           { ...prev[0], text: responseText },
