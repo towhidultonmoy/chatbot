@@ -1,36 +1,40 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
+# from werkzeug.utils import secure_filename   # if you plan to save the file
 
 app = Flask(__name__)
-CORS(app, resources={r"/text": {"origins": ["https://*.ngrok.io", "http://localhost:5173", "http://3.134.101.21:5173"]}})
+CORS(app, resources={r"/text": {"origins": [
+    "https://*.ngrok.io", "http://localhost:5173", "http://3.134.101.21:5173"
+]}})
 
 def get_response(text):
     return f"Received: {text}"
 
 @app.route('/text', methods=['POST'])
 def text_input():
-    # Handle file uploads
+    # 1) IMAGE
     if 'image' in request.files:
-        image_file = request.files['image']
-        # You can save the file or process it here
-        # For now, we'll just acknowledge receipt
-        return jsonify({"response": f"Received image: {image_file.filename}"})
-    
-    # Handle audio uploads
+        image = request.files['image']
+        # filename = secure_filename(image.filename)
+        # image.save(f"./uploads/{filename}")  # if you want to save it
+        return jsonify({
+            "response": f"Image received: {image.filename}"
+        }), 200
+
+    # 2) AUDIO
     if 'audio' in request.files:
-        audio_file = request.files['audio']
-        # Process audio file here
-        return jsonify({"response": f"Received audio: {audio_file.filename}"})
-    
-    # Handle regular text input
-    data = request.get_json()
-    if not data:
-        return jsonify({"response": "No input provided"}), 400
-    
-    text = data.get('text', 'No text provided')
-    response = get_response(text)
-    return jsonify({"response": response})
+        audio = request.files['audio']
+        return jsonify({
+            "response": f"Audio received: {audio.filename}"
+        }), 200
+
+    # 3) TEXT
+    data = request.get_json(silent=True) or {}
+    text = data.get('text')
+    if not text:
+        return jsonify({"response": "No text provided"}), 400
+
+    return jsonify({"response": get_response(text)}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
