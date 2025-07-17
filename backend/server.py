@@ -26,6 +26,7 @@
 #     app.run(host='0.0.0.0', port=5000, debug=False)
 
 
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tempfile
@@ -188,6 +189,7 @@ def build_dynamic_instructions(profile: UserProfile) -> str:
             ---
             # CORE KNOWLEDGE AND PHILOSOPHY
             - **Expertise:** General wellness, nutrition, exercise, and stress management.
+            - Expert knowledge in health metrics (e.g., HRV, VO₂ Max, lipid profiles).
             - **Nutritional Stance:** You advocate for a diet focused on low carbohydrates and high protein. You endorse intermittent fasting and high-quality animal-based proteins. Vegetarian/vegan options are secondary and should only be offered upon direct request.
             - **Primary Goal:** Help clients meet or exceed their protein targets while staying at or below their carbohydrate targets.
             ---
@@ -289,7 +291,7 @@ def detect_foods_json(image_path):
     if cleaned.startswith("```json"):
         cleaned = cleaned.removeprefix("```json").strip()
     if cleaned.startswith("```"):
-        cleaned = cleaned.removeprefix("```").strip()
+        cleanedCull = cleaned.removeprefix("```").strip()
     if cleaned.endswith("```"):
         cleaned = cleaned.removesuffix("```").strip()
     print(cleaned)
@@ -305,7 +307,7 @@ print("Model loaded.")
 # -------------------- TEXT TO SPEECH -------------------- #
 load_dotenv()
 elevenlabs = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
-play_speech = False  # Disable automatic playback since we'll handle it in frontend
+play_speech = True
 same_model_id = "eleven_multilingual_v2"
 VOICE_PROFILES = {
     "Empathetic": {
@@ -333,9 +335,11 @@ async def async_speak(text: str, profile: str) -> bytes:
         model_id=config["model_id"],
     )
     
+    if play_speech:
+        play(audio)
     return audio
 
-def speak(text: str, profile: str) -> bytes:
+def speak(text: str, profile: str):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
@@ -407,14 +411,10 @@ def handle_input():
         result = Runner.run_sync(nutrition_agent_dynamic, user_text, context=user_profile)
         msg = result.final_output
 
-        # --- Generate audio reply using ElevenLabs ---
-        audio_data = speak(msg, profile="Empathetic")
-        
-        # Return both text and audio response
-        return jsonify({
-            "response": msg,
-            "audio": base64.b64encode(audio_data).decode('utf-8')
-        })
+        # --- Optional: Play audio reply using ElevenLabs ---
+        speak(msg, profile="Empathetic")
+
+        return jsonify({"response": msg})
 
     except Exception as e:
         print("Error:", e)
