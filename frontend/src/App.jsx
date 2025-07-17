@@ -386,6 +386,25 @@ function EliaApp() {
   const mediaRecorderRef = useRef(null);
   const inputRef = useRef(null);
 
+  const playAudio = (base64Audio) => {
+    try {
+      const audioData = atob(base64Audio);
+      const arrayBuffer = new ArrayBuffer(audioData.length);
+      const view = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < audioData.length; i++) {
+        view[i] = audioData.charCodeAt(i);
+      }
+      const blob = new Blob([arrayBuffer], { type: 'audio/mp3' });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.play().catch(error => {
+        console.error("Audio playback error:", error);
+      });
+    } catch (error) {
+      console.error("Error processing audio:", error);
+    }
+  };
+
   const handleTextSubmit = async () => {
     if (!input.trim()) return;
     const now = new Date();
@@ -393,6 +412,9 @@ function EliaApp() {
     try {
       const response = await axios.post('/text', { text: input });
       setMessages([...messages, { user: 'You', text: input, time: timestamp }, { user: 'ELIA', text: response.data.response, time: timestamp }]);
+      if (response.data.audio) {
+        playAudio(response.data.audio);
+      }
       setInput('');
     } catch (error) {
       console.error("Text input error:", error);
@@ -430,6 +452,9 @@ function EliaApp() {
           try {
             const response = await axios.post('/text', formData);
             setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: timestamp }]);
+            if (response.data.audio) {
+              playAudio(response.data.audio);
+            }
             setIsChatVisible(true);
           } catch (error) {
             console.error("Backend request error:", error);
@@ -464,6 +489,9 @@ function EliaApp() {
       try {
         const response = await axios.post('/text', formData);
         setMessages([...messages, { user: 'You', text: 'Image uploaded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: timestamp }]);
+        if (response.data.audio) {
+          playAudio(response.data.audio);
+        }
         setIsChatVisible(true);
       } catch (error) {
         console.error("Image upload error:", error);
@@ -560,6 +588,7 @@ function EliaApp() {
                     const now = new Date();
                     const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
                     setMessages([...messages, { user: 'You', text: 'What do you suggest?', time: timestamp }, { user: 'ELIA', text: 'Great choice, Ryan! Try the Full-Body Flex & Flow routine: 45 min, 5000 points. 💪', time: timestamp }]);
+                    playAudio(response.data.audio); // Assuming the suggest button response has audio
                   }}>
                     What do you suggest?
                   </button>
