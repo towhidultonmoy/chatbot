@@ -35,9 +35,14 @@
   max-height: 100vh;
 }
 
-.chat-button {
+.landing-buttons {
   position: relative;
   z-index: 1;
+  display: flex;
+  gap: 12px;
+}
+
+.landing-button {
   padding: 12px 24px;
   font-size: 16px;
   font-weight: 600;
@@ -49,11 +54,26 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   font-family: 'Manrope', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.chat-button:hover {
+.landing-button:hover {
   background-color: #0056b3;
   transform: translateY(-2px);
+}
+
+.image-button input {
+  display: none;
+}
+
+.voice-button.recording {
+  background-color: #dc3545;
+}
+
+.voice-button.recording:hover {
+  background-color: #c82333;
 }
 
 .header {
@@ -356,10 +376,14 @@
     object-fit: cover;
   }
 
-  .chat-button {
+  .landing-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .landing-button {
     font-size: 14px;
     padding: 10px 20px;
-    top: 70%;
   }
 
   .header {
