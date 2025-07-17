@@ -13,6 +13,13 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/text/, '/text')
       }
-    }
+    },
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      '441cf1a83eb9.ngrok-free.app'
+    ]
+    // Or, for dev, you can do:
+    // allowedHosts: 'all'
   }
 })
