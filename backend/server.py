@@ -821,6 +821,11 @@ from dataclasses import dataclass, field
 from typing import List
 import asyncio
 import nest_asyncio
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Apply nest_asyncio to allow nested event loops
 nest_asyncio.apply()
@@ -899,7 +904,7 @@ def fetch_profile_info_plain(ctx: UserProfile) -> str:
         * **Areas for Focus:** The primary health opportunities are:
             1.  **Improving Lipid Quality:** Shifting the lipoprotein profile from small, dense LDL particles toward larger, fluffier particles and increasing large HDL.
             2.  **Balancing Fatty Acids:** Increasing the Omega-3 to Omega-6 ratio by incorporating more Omega-3-rich foods.
-        * **Context:** User is motivated by anti-aging and longevity. Recommendations should be framed around optimizing an already healthy baseline, focusing on nuanced biomarker improvements.
+        * **Context:** User is motivated by anti-aging and longevity. Recommendations should be framed around除尘 optimizing an already healthy baseline, focusing on nuanced biomarker improvements.
         **6. Exercise Recommendations by Intensity:**
         * **Moderate Intensity (for Aerobic Base):**
             * Air squats
@@ -961,7 +966,7 @@ def build_dynamic_instructions(profile: UserProfile) -> str:
     history = "\n".join(f"User: {msg}" for msg in profile.conversation_history[-5:])
     prompt = ("""
             # ROLE AND PERSONA
-            You are a health coach, named ELIA. Your personality is warm, loving, and consistently encouraging. Your purpose is to empower clients to build sustainable, healthy lifestyles.
+            You are a health coach, named ELIA. Your personality is warm, loving, and consistently encouraging. Your purpose is to empower clients to build sustainable, healthy nutritional lifestyles.
             ---
             # CORE KNOWLEDGE AND PHILOSOPHY
             - **Expertise:** General wellness, nutrition, exercise, and stress management.
@@ -1001,7 +1006,6 @@ def encode_image_to_base64(image_path):
 def detect_foods_json(image_path):
     base64_image = encode_image_to_base64(image_path)
     prompt = ("""
-        ROLE:
         You are a highly advanced, friendly food recognition and nutrition analysis assistant. You use computer vision and nutrition intelligence to evaluate food images with chef-level specificity and coaching-level encouragement.
         WHEN AN IMAGE IS RECEIVED:
         1. Food Detection:
@@ -1014,7 +1018,7 @@ def detect_foods_json(image_path):
                 Describe them vividly-like a passionate chef. Mention:
                     Ingredient details (e.g., ribeye steak vs. sirloin)
                     Cooking methods (e.g., grilled, baked, pan-seared)
-                    Visible garnishes, toppings, or sides
+                    Ganishments, toppings, or sides
                     Cultural or dish-specific cues (e.g., biryani vs. plain rice)
             3. Nutritional Estimation (for the total meal):
                 Protein (grams)
@@ -1065,19 +1069,16 @@ def detect_foods_json(image_path):
     cleaned = raw_response.strip()
     if cleaned.startswith("```json"):
         cleaned = cleaned.removeprefix("```json").strip()
-    if cleaned.startswith("```"):
-        cleaned = cleaned.removeprefix("```").strip()
     if cleaned.endswith("```"):
         cleaned = cleaned.removesuffix("```").strip()
-    print(cleaned)
-    print("\n\n\n")
+    logger.debug(f"Food detection response: {cleaned}")
     return cleaned
 
 # -------------------- SPEECH TO TEXT -------------------- #
 warnings.filterwarnings("ignore", category=UserWarning)
-print("Loading Whisper model...")
+logger.info("Loading Whisper model...")
 WHISPER_MODEL = whisper.load_model("tiny")  # tiny for low RAM
-print("Model loaded.")
+logger.info("Whisper model loaded.")
 
 # -------------------- TEXT TO SPEECH -------------------- #
 load_dotenv()
@@ -1102,17 +1103,28 @@ VOICE_PROFILES = {
 async def async_speak(text: str, profile: str) -> bytes:
     config = VOICE_PROFILES.get(profile)
     if config is None:
+        logger.error(f"Unknown profile '{profile}'. Choose from: {list(VOICE_PROFILES)}")
         raise ValueError(f"Unknown profile '{profile}'. Choose from: {list(VOICE_PROFILES)}")
     
-    audio = elevenlabs.text_to_speech.convert(
-        text=text,
-        voice_id=config["voice_id"],
-        model_id=config["model_id"],
-    )
-    
-    if play_speech:
-        play(audio)
-    return audio
+    try:
+        audio_generator = elevenlabs.text_to_speech.convert(
+            text=text,
+            voice_id=config["voice_id"],
+            model_id=config["model_id"],
+        )
+        # Collect audio chunks into bytes
+        audio_chunks = []
+        for chunk in audio_generator:
+            audio_chunks.append(chunk)
+        audio_bytes = b''.join(audio_chunks)
+        
+        if play_speech:
+            play(audio_bytes)
+        logger.debug(f"Generated audio for text: {text[:50]}... (length: {len(audio_bytes)} bytes)")
+        return audio_bytes
+    except Exception as e:
+        logger.error(f"Error generating audio: {str(e)}")
+        raise
 
 def speak(text: str, profile: str):
     loop = asyncio.new_event_loop()
@@ -1145,6 +1157,7 @@ def handle_input():
         # 1. IMAGE input
         if 'image' in request.files:
             file = request.files['image']
+            logger.debug("Received image input")
             with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
                 file.save(tmp)
                 tmp_path = tmp.name
@@ -1161,18 +1174,22 @@ def handle_input():
         # 2. AUDIO input
         elif 'audio' in request.files:
             file = request.files['audio']
+            logger.debug("Received audio input")
             with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
                 file.save(tmp)
                 tmp_path = tmp.name
             result = WHISPER_MODEL.transcribe(tmp_path)
             user_text = result["text"]
+            logger.debug(f"Transcribed audio to: {user_text}")
             os.remove(tmp_path)
 
         # 3. TEXT input
         elif request.is_json:
             data = request.get_json()
             user_text = data.get("text", "")
+            logger.debug(f"Received text input: {user_text}")
         else:
+            logger.warning("No valid input provided")
             return jsonify({"response": "No valid input provided"}), 400
 
         # --- Run main agent pipeline ---
@@ -1185,16 +1202,18 @@ def handle_input():
         )
         result = Runner.run_sync(nutrition_agent_dynamic, user_text, context=user_profile)
         msg = result.final_output
+        logger.debug(f"Agent response: {msg}")
 
         # --- Generate audio reply using ElevenLabs ---
         audio_bytes = speak(msg, profile="Empathetic")
         audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        logger.debug(f"Audio base64 length: {-Len(audio_base64)}")
 
         return jsonify({"response": msg, "audio": audio_base64})
 
     except Exception as e:
-        print("Error:", e)
+        logger.error(f"Server error: {str(e)}", exc_info=True)
         return jsonify({"response": f"Server error: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=True)
