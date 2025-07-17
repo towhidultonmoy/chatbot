@@ -18,7 +18,7 @@ function EliaApp() {
       setInput('');
     } catch (error) {
       console.error("Text input error:", error);
-      setMessages([...messages, { user: 'You', text: input, time: timestamp }, { user: 'ELIA', text: `Error: ${error.message}`, time: timestamp }]);
+      setMessages([...messages, { user: 'You', text: input, time: timestamp }, { user: 'ELIA', text: Error: ${error.message}, time: timestamp }]);
     }
   };
 
@@ -53,7 +53,7 @@ function EliaApp() {
           setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: timestamp }]);
         } catch (error) {
           console.error("Backend request error:", error);
-          setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: `Error sending audio to backend: ${error.message}`, time: timestamp }]);
+          setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: Error sending audio to backend: ${error.message}, time: timestamp }]);
         }
       };
       mediaRecorder.onstart = () => console.log("Recording started");
@@ -65,7 +65,7 @@ function EliaApp() {
       }, 5000);
     } catch (error) {
       console.error("Audio input error:", error);
-      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: `Error recording audio: ${error.message}`, time: timestamp }]);
+      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: Error recording audio: ${error.message}, time: timestamp }]);
     }
   };
 
@@ -76,17 +76,12 @@ function EliaApp() {
       const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
       const formData = new FormData();
       formData.append('image', file);
-      
       try {
-        const response = await axios.post('/text', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        const response = await axios.post('/text', formData);
         setMessages([...messages, { user: 'You', text: 'Image uploaded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: timestamp }]);
       } catch (error) {
         console.error("Image upload error:", error);
-        setMessages([...messages, { user: 'You', text: 'Image uploaded', time: timestamp }, { user: 'ELIA', text: `Error uploading image: ${error.message}`, time: timestamp }]);
+        setMessages([...messages, { user: 'You', text: 'Image uploaded', time: timestamp }, { user: 'ELIA', text: Error uploading image: ${error.message}, time: timestamp }]);
       }
     }
   };
@@ -131,11 +126,11 @@ function EliaApp() {
       <div className="chat-container">
         <div className="messages">
           {messages.map((msg, index) => (
-            <div key={index} className={`message-container ${msg.user === 'ELIA' ? 'elia-container' : 'user-container'}`}>
-              <div className={`avatar ${msg.user === 'ELIA' ? 'elia-avatar' : 'user-avatar'}`}>
+            <div key={index} className={message-container ${msg.user === 'ELIA' ? 'elia-container' : 'user-container'}}>
+              <div className={avatar ${msg.user === 'ELIA' ? 'elia-avatar' : 'user-avatar'}}>
                 {msg.user.charAt(0)}
               </div>
-              <div className={`message ${msg.user === 'ELIA' ? 'elia' : 'user'}`}>
+              <div className={message ${msg.user === 'ELIA' ? 'elia' : 'user'}}>
                 <span className="user-label">{msg.user}</span>
                 <p>{msg.text}</p>
                 <span className="timestamp">{msg.time}</span>
