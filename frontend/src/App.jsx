@@ -27,10 +27,15 @@ function EliaApp() {
   const handleVoiceInput = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("Microphone access granted");
       const mediaRecorder = new MediaRecorder(stream);
       const chunks = [];
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorder.ondataavailable = (e) => {
+        console.log("Recording data available");
+        chunks.push(e.data);
+      };
       mediaRecorder.onstop = async () => {
+        console.log("Recording stopped");
         const blob = new Blob(chunks, { type: 'audio/wav' });
         const formData = new FormData();
         formData.append('audio', blob, 'recording.wav');
@@ -39,13 +44,19 @@ function EliaApp() {
         const response = await axios.post(`${backendUrl}/text`, { text: 'Voice input (mock)' });
         setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
       };
+      mediaRecorder.onstart = () => console.log("Recording started");
+      mediaRecorder.onerror = (e) => console.error("MediaRecorder error:", e);
       mediaRecorder.start();
-      setTimeout(() => mediaRecorder.stop(), 5000);
+      setTimeout(() => {
+        mediaRecorder.stop();
+        console.log("Recording timeout triggered");
+      }, 5000);
       stream.getTracks().forEach(track => track.stop());
     } catch (error) {
+      console.error("Audio input error:", error);
       const now = new Date();
       const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: 'Error recording audio!', time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
+      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: `Error recording audio: ${error.message}`, time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
     }
   };
 
