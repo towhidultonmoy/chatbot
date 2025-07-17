@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
-import json
+from flask_cors import CORS  # Import CORS
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Mock response function (replace with your actual AI logic)
 def get_response(text):
@@ -18,4 +19,4 @@ def text_input():
     return jsonify({"response": response})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)  # Use 0.0.0.0 for external access, disable debug in production
+    app.run(host='0.0.0.0', port=5000, debug=False)  # Use 0.0.0.0 for external access
