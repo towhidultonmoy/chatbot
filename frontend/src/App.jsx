@@ -28,16 +28,17 @@ function EliaApp() {
     const now = new Date();
     const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      console.error("MediaDevices or getUserMedia not supported in this browser");
-      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: 'Error: Audio recording is not supported in this browser or requires HTTPS.', time: timestamp }]);
+    if (!window.navigator.mediaDevices || !window.navigator.mediaDevices.getUserMedia) {
+      console.error("MediaDevices or getUserMedia not supported");
+      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: 'Error: Audio recording is not supported in this browser. Please use Chrome or Firefox with HTTPS or localhost.', time: timestamp }]);
       return;
     }
   
     try {
+      console.log("Requesting microphone access...");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("Microphone access granted");
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       const chunks = [];
       mediaRecorder.ondataavailable = (e) => {
         console.log("Recording data available");
@@ -46,11 +47,16 @@ function EliaApp() {
       mediaRecorder.onstop = async () => {
         console.log("Recording stopped");
         stream.getTracks().forEach(track => track.stop());
-        const blob = new Blob(chunks, { type: 'audio/webm' }); // Use webm for broader compatibility
+        const blob = new Blob(chunks, { type: 'audio/webm' });
         const formData = new FormData();
         formData.append('audio', blob, 'recording.webm');
-        const response = await axios.post(`${backendUrl}/text`, { text: 'Voice input (mock)' });
-        setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
+        try {
+          const response = await axios.post(`${backendUrl}/text`, { text: 'Voice input (mock)' });
+          setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
+        } catch (error) {
+          console.error("Backend request error:", error);
+          setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: `Error sending audio to backend: ${error.message}`, time: timestamp }]);
+        }
       };
       mediaRecorder.onstart = () => console.log("Recording started");
       mediaRecorder.onerror = (e) => console.error("MediaRecorder error:", e);
