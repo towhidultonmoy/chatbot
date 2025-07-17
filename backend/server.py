@@ -1,41 +1,41 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
 
 app = Flask(__name__)
-CORS(app, resources={
-    r"/text": {
-        "origins": ["*"],  # Allow all for ngrok testing
-        "methods": ["POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
-    }
-})
+CORS(app, resources={r"/text": {"origins": ["https://*.ngrok.io", "http://localhost:5173", "http://3.134.101.21:5173"]}})  # Replace <EC2_PUBLIC_IP>
+
+def get_response(text):
+    return f"Received: {text}"
 
 @app.route('/text', methods=['POST'])
-def handle_input():
-    # Audio handling
-    if 'audio' in request.files:
-        audio_file = request.files['audio']
-        audio_file.save('temp_audio.webm')  # Save temporarily
-        return jsonify({
-            "response": f"Received audio recording ({audio_file.filename})"
-        })
-
-    # Image handling
-    if 'image' in request.files:
-        image_file = request.files['image']
-        return jsonify({
-            "response": f"Received image ({image_file.filename})"
-        })
-
-    # Text handling
-    if request.json:
-        text = request.json.get('text', '')
-        return jsonify({
-            "response": f"Received text: {text}"
-        })
-
-    return jsonify({"response": "No valid input detected"}), 400
+def text_input():
+    data = request.form if 'image' in request.files or 'audio' in request.files else request.json
+    if not data:
+        return jsonify({"response": "No input provided"}), 400
+    text = data.get('text', 'No text provided')
+    response = get_response(text)
+    return jsonify({"response": response})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=False)
+
+this is my vite.config.js:
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    proxy: {
+      '/text': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/text/, '/text')
+      }
+    }
+  }
+})
