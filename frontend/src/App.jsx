@@ -76,8 +76,13 @@ function EliaApp() {
       const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
       const formData = new FormData();
       formData.append('image', file);
+      
       try {
-        const response = await axios.post('/text', formData);
+        const response = await axios.post('/text', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
         setMessages([...messages, { user: 'You', text: 'Image uploaded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: timestamp }]);
       } catch (error) {
         console.error("Image upload error:", error);
