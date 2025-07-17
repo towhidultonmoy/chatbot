@@ -17,7 +17,7 @@ export default defineConfig({
     allowedHosts: [
       'localhost',
       '127.0.0.1',
-      '441cf1a83eb9.ngrok-free.app'
+      '9165d7cdbe2d.ngrok-free.app'
     ]
     // Or, for dev, you can do:
     // allowedHosts: 'all'
