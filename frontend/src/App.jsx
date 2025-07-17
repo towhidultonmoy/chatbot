@@ -25,6 +25,15 @@ function EliaApp() {
   };
 
   const handleVoiceInput = async () => {
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error("MediaDevices or getUserMedia not supported in this browser");
+      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: 'Error: Audio recording is not supported in this browser or requires HTTPS.', time: timestamp }]);
+      return;
+    }
+  
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("Microphone access granted");
@@ -36,11 +45,10 @@ function EliaApp() {
       };
       mediaRecorder.onstop = async () => {
         console.log("Recording stopped");
-        const blob = new Blob(chunks, { type: 'audio/wav' });
+        stream.getTracks().forEach(track => track.stop());
+        const blob = new Blob(chunks, { type: 'audio/webm' }); // Use webm for broader compatibility
         const formData = new FormData();
-        formData.append('audio', blob, 'recording.wav');
-        const now = new Date();
-        const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        formData.append('audio', blob, 'recording.webm');
         const response = await axios.post(`${backendUrl}/text`, { text: 'Voice input (mock)' });
         setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: response.data.response, time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
       };
@@ -51,12 +59,9 @@ function EliaApp() {
         mediaRecorder.stop();
         console.log("Recording timeout triggered");
       }, 5000);
-      stream.getTracks().forEach(track => track.stop());
     } catch (error) {
       console.error("Audio input error:", error);
-      const now = new Date();
-      const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: `Error recording audio: ${error.message}`, time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) }]);
+      setMessages([...messages, { user: 'You', text: 'Voice recorded', time: timestamp }, { user: 'ELIA', text: `Error recording audio: ${error.message}`, time: timestamp }]);
     }
   };
 
@@ -93,7 +98,7 @@ function EliaApp() {
     return (
       <div className="app">
         <div className="landing-container">
-          <img src="/images/your-landing-image.jpg" alt="Landing Page" className="landing-image" />
+          <img src="LandingPage.JPG" alt="Landing Page" className="landing-image" />
           <button className="chat-button" onClick={() => setIsChatVisible(true)}>Let's Chat</button>
         </div>
         <div className="nav-bar">
