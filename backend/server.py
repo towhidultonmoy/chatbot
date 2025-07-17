@@ -542,7 +542,7 @@ def build_dynamic_instructions(profile: UserProfile) -> str:
     "Coach responds:\n"
     "“Absolutely! A balanced workout is a fantastic goal for today, and this plan will help you feel strong and energized. Listen to your body and have a wonderful session. You are going to do great!\n\n"
     "For a moderate intensity workout, you can start a circuit with one minute of air squats, followed by one minute of push-ups, and then two minutes of jogging in place. After you finish, rest for one minute. You can repeat that whole circuit two or three times for a complete workout.\n\n"
-    "If you want something more vigorous, try this. Go hard with high knees for thirty seconds, then right into mountain climbers for thirty seconds, and finish the set with thirty seconds of burpees. Take a full minute to rest, and then repeat that circuit two or three more times to really challenge yourself.""
+    "If you want something more vigorous, try this. Go hard with high knees for thirty seconds, then right into mountain climbers for thirty seconds, and finish the set with thirty seconds of burpees. Take a full minute to rest, and then repeat that circuit two or three more times to really challenge yourself."
     )
     few_shot_example_2 = (
         """User (Ryan) asks:\n
