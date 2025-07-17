@@ -8,8 +8,8 @@ function EliaApp() {
   const [messages, setMessages] = useState([]);
   const audioInputRef = useRef(null);
 
-  // Use environment variable for backend URL, fallback to localhost for development
-  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  // Use Vite environment variable or fallback to EC2 public IP
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://3.134.101.21:5000'; // Replace with your EC2 public IP
 
   const handleTextSubmit = async () => {
     if (!input.trim()) return;
