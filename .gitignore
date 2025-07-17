@@ -17,4 +17,4 @@ uploads/
 
 # Virtual environment
 venv/
-env/
+env/.env
