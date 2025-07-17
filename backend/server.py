@@ -26,7 +26,6 @@
 #     app.run(host='0.0.0.0', port=5000, debug=False)
 
 
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tempfile
@@ -172,7 +171,7 @@ def build_dynamic_instructions(profile: UserProfile) -> str:
 
         Start with a warm-up to prepare your body; spend about five to ten minutes doing light stretches and movements like arm circles and leg swings. Then, move into a moderate intensity circuit: begin with air squats for one minute, followed by push-ups for one minute, and finish with two minutes of jogging in place. Rest for one minute, and repeat that circuit two to three times.
 
-        After that, dive into a vigorous intensity circuit: first, do high knees for thirty seconds, then transition into mountain climbers for thirty seconds, and complete the set with thirty seconds of burpees. Take a full minute to rest afterward, and repeat this circuit two to three more times.
+        After that, dive into a vigorous intensity circuit: first, do high knees for thirty seconds, then transition into mountain climbers for thirty seconds, and complete the set with thirty seconds of burpees. Take a full minute to rest afterward, and repeat this circuit two or three more times.
 
         Finally, remember to cool down for about five minutes with gentle stretches to help your muscles recover. You're going to do great! Enjoy each movement and listen to your body as you go.\n\n"""
     )
@@ -189,7 +188,6 @@ def build_dynamic_instructions(profile: UserProfile) -> str:
             ---
             # CORE KNOWLEDGE AND PHILOSOPHY
             - **Expertise:** General wellness, nutrition, exercise, and stress management.
-            - Expert knowledge in health metrics (e.g., HRV, VO₂ Max, lipid profiles).
             - **Nutritional Stance:** You advocate for a diet focused on low carbohydrates and high protein. You endorse intermittent fasting and high-quality animal-based proteins. Vegetarian/vegan options are secondary and should only be offered upon direct request.
             - **Primary Goal:** Help clients meet or exceed their protein targets while staying at or below their carbohydrate targets.
             ---
@@ -291,11 +289,9 @@ def detect_foods_json(image_path):
     if cleaned.startswith("```json"):
         cleaned = cleaned.removeprefix("```json").strip()
     if cleaned.startswith("```"):
-        cleanedCull = cleaned.removeprefix("```").strip()
+        cleaned = cleaned.removeprefix("```").strip()
     if cleaned.endswith("```"):
         cleaned = cleaned.removesuffix("```").strip()
-    print(cleaned)
-    print("\n\n\n")
     return cleaned
 
 # -------------------- SPEECH TO TEXT -------------------- #
@@ -339,11 +335,12 @@ async def async_speak(text: str, profile: str) -> bytes:
         play(audio)
     return audio
 
-def speak(text: str, profile: str):
+def speak(text: str, profile: str) -> str:
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
-        return loop.run_until_complete(async_speak(text, profile))
+        audio_bytes = loop.run_until_complete(async_speak(text, profile))
+        return base64.b64encode(audio_bytes).decode("utf-8")
     finally:
         loop.close()
 
@@ -398,7 +395,7 @@ def handle_input():
             data = request.get_json()
             user_text = data.get("text", "")
         else:
-            return jsonify({"response": "No valid input provided"}), 400
+            return jsonify({"response": "No valid input provided", "audio": ""}), 400
 
         # --- Run main agent pipeline ---
         user_profile.conversation_history.append(user_text)
@@ -406,19 +403,19 @@ def handle_input():
             name="ELIA",
             model="gpt-4o-mini",
             instructions=build_dynamic_instructions(user_profile),
-            tools=[fetch_profile_info]  # <-- function, NOT function()
+            tools=[fetch_profile_info]
         )
         result = Runner.run_sync(nutrition_agent_dynamic, user_text, context=user_profile)
         msg = result.final_output
 
-        # --- Optional: Play audio reply using ElevenLabs ---
-        speak(msg, profile="Empathetic")
+        # --- Generate audio for the response ---
+        audio_base64 = speak(msg, profile="Empathetic")
 
-        return jsonify({"response": msg})
+        return jsonify({"response": msg, "audio": audio_base64})
 
     except Exception as e:
         print("Error:", e)
-        return jsonify({"response": f"Server error: {str(e)}"}), 500
+        return jsonify({"response": f"Server error: {str(e)}", "audio": ""}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
