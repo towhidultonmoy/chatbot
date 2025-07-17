@@ -57,8 +57,8 @@ class UserProfile:
     hs_crp: float
     conversation_history: List[str] = field(default_factory=list)
 
-@function_tool
-def fetch_profile_info(ctx: UserProfile) -> str:
+# UNDECORATED version for use in instruction string
+def fetch_profile_info_plain(ctx: UserProfile) -> str:
     return(
         """
         ### **User Profile of Ryan**
@@ -143,8 +143,13 @@ def fetch_profile_info(ctx: UserProfile) -> str:
         """
     )
 
+# DECORATED version for function tool
+@function_tool
+def fetch_profile_info(ctx: UserProfile) -> str:
+    return fetch_profile_info_plain(ctx)
+
 def build_dynamic_instructions(profile: UserProfile) -> str:
-    profile_info = fetch_profile_info(profile)
+    profile_info = fetch_profile_info_plain(profile)
     few_shot_example_1 = (
     "User asks:\n"
     "“Can you give me a balanced workout for today? Maybe something with a mix of intensities.”\n\n"
@@ -289,7 +294,7 @@ def detect_foods_json(image_path):
 # -------------------- SPEECH TO TEXT -------------------- #
 warnings.filterwarnings("ignore", category=UserWarning)
 print("Loading Whisper model...")
-WHISPER_MODEL = whisper.load_model("tiny")
+WHISPER_MODEL = whisper.load_model("tiny")  # tiny for low RAM
 print("Model loaded.")
 
 # -------------------- TEXT TO SPEECH -------------------- #
@@ -299,15 +304,15 @@ play_speech = True
 same_model_id = "eleven_multilingual_v2"
 VOICE_PROFILES = {
     "Empathetic": {
-        "voice_id": "g6xIsTj2HwM6VR4iXFCw",  # Jessica Anne Bogart: Empathetic and expressive
+        "voice_id": "g6xIsTj2HwM6VR4iXFCw",
         "model_id": same_model_id
     },
     "Professional": {
-        "voice_id": "1SM7GgM6IMuvQlz2BwM3",  # Stuart: Professional & friendly Aussie
+        "voice_id": "1SM7GgM6IMuvQlz2BwM3",
         "model_id": same_model_id
     },
     "Energetic": {
-        "voice_id": "56AoDkrOh6qfVPDXZ7Pt",  # Cassidy: Engaging and energetic
+        "voice_id": "56AoDkrOh6qfVPDXZ7Pt",
         "model_id": same_model_id
     }
 }
@@ -323,7 +328,6 @@ def speak(text: str, profile: str, save: bool = False) -> bytes:
         )
         play(audio_bytes)
     # (optional saving code here if needed)
-    # return audio_bytes
 
 # -------------------- GLOBAL PROFILE INSTANCE -------------------- #
 user_profile = UserProfile(
@@ -384,7 +388,7 @@ def handle_input():
             name="ELIA",
             model="gpt-4o-mini",
             instructions=build_dynamic_instructions(user_profile),
-            tools=[fetch_profile_info]
+            tools=[fetch_profile_info]  # <-- function, NOT function()
         )
         result = Runner.run_sync(nutrition_agent_dynamic, user_text, context=user_profile)
         msg = result.final_output
@@ -400,5 +404,4 @@ def handle_input():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
-
 
