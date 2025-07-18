@@ -325,15 +325,20 @@ async def async_speak(text: str, profile: str) -> bytes:
     if config is None:
         raise ValueError(f"Unknown profile '{profile}'. Choose from: {list(VOICE_PROFILES)}")
     
-    audio = elevenlabs.text_to_speech.convert(
+    audio_generator = elevenlabs.text_to_speech.convert(
         text=text,
         voice_id=config["voice_id"],
         model_id=config["model_id"],
     )
     
+    # Collect generator output into a single bytes object
+    audio_bytes = b""
+    for chunk in audio_generator:
+        audio_bytes += chunk
+    
     if play_speech:
-        play(audio)
-    return audio
+        play(audio_bytes)
+    return audio_bytes
 
 def speak(text: str, profile: str) -> str:
     loop = asyncio.new_event_loop()
