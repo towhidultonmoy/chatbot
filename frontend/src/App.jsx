@@ -10,6 +10,7 @@ function EliaApp() {
   const [isRecording, setIsRecording] = useState(false);
   const audioInputRef = useRef(null);
   const imageInputRef = useRef(null);
+  const textInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
@@ -30,19 +31,6 @@ function EliaApp() {
       });
     } catch (error) {
       console.error("Error processing audio:", error);
-    }
-  };
-
-  const fetchInitialMessagesAudio = async (text) => {
-    try {
-      const response = await axios.post('/text', { text });
-      if (response.data.audio) {
-        playAudio(response.data.audio);
-      }
-      return response.data.response;
-    } catch (error) {
-      console.error("Error fetching initial message audio:", error);
-      return `Error: ${error.message}`;
     }
   };
 
@@ -92,8 +80,6 @@ function EliaApp() {
           const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
           const formData = new FormData();
           formData.append('audio', blob, 'recording.webm');
-          formData.append('text', '');
-
           setIsLoading(true);
           setIsChatVisible(true);
           try {
@@ -132,8 +118,6 @@ function EliaApp() {
       const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('text', '');
-
       setIsLoading(true);
       setIsChatVisible(true);
       console.log('Uploading image');
@@ -164,6 +148,12 @@ function EliaApp() {
     }
     console.log('isChatVisible:', isChatVisible); // Debug state change
   }, [isChatVisible]);
+
+  useEffect(() => {
+    if (isChatVisible && !isLoading) {
+      textInputRef.current?.focus();
+    }
+  }, [isChatVisible, isLoading]);
 
   return (
     <div className="app">
@@ -225,16 +215,24 @@ function EliaApp() {
                     <p>{msg.text}</p>
                     <span className="timestamp">{msg.time}</span>
                     {msg.user === 'ELIA' && index === messages.length - 1 && (
-                      <button className="suggest-button" onClick={() => {
+                      <button className="suggest-button" onClick={async () => {
                         const now = new Date();
                         const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-                        setMessages([...messages, { user: 'You', text: 'What do you suggest?', time: timestamp }, { user: 'ELIA', text: 'Great choice, Ryan! Try the Full-Body Flex & Flow routine: 45 min, 5000 points. 💪', time: timestamp }]);
-                        fetchInitialMessagesAudio('Great choice, Ryan! Try the Full-Body Flex & Flow routine: 45 min, 5000 points. 💪').then((responseText) => {
-                          setMessages((prev) => [
-                            ...prev.slice(0, -1),
-                            { user: 'ELIA', text: responseText, time: timestamp }
-                          ]);
-                        });
+                        const suggestText = 'What do you suggest?';
+                        setMessages([...messages, { user: 'You', text: suggestText, time: timestamp }]);
+                        setIsLoading(true);
+                        try {
+                          const response = await axios.post('/text', { text: suggestText });
+                          setMessages((prev) => [...prev, { user: 'ELIA', text: response.data.response, time: timestamp }]);
+                          if (response.data.audio) {
+                            playAudio(response.data.audio);
+                          }
+                        } catch (error) {
+                          console.error("Suggest error:", error);
+                          setMessages((prev) => [...prev, { user: 'ELIA', text: `Error: ${error.message}`, time: timestamp }]);
+                        } finally {
+                          setIsLoading(false);
+                        }
                       }}>
                         What do you suggest?
                       </button>
@@ -246,6 +244,7 @@ function EliaApp() {
           </div>
           <div className="input-area">
             <input
+              ref={textInputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -278,263 +277,6 @@ function EliaApp() {
           </div>
         </div>
       )}
-      <style jsx>{`
-        .app {
-          font-family: Arial, sans-serif;
-          height: 100vh;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          background-color: #f5f5f5;
-        }
-
-        .landing-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 80vh;
-          text-align: center;
-          padding: 20px;
-        }
-
-        .landing-image {
-          max-width: 100%;
-          height: auto;
-          border-radius: 10px;
-        }
-
-        .input-buttons {
-          display: flex;
-          gap: 20px;
-          margin-top: 20px;
-        }
-
-        .landing-input {
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 10px;
-          border-radius: 50%;
-          background-color: #e0e0e0;
-          transition: background-color 0.3s;
-        }
-
-        .landing-input:hover {
-          background-color: #d0d0d0;
-        }
-
-        .voice-button.recording {
-          background-color: #ff4444;
-        }
-
-        .chat-container {
-          display: flex;
-          flex-direction: column;
-          height: 100vh;
-          width: 100%;
-          max-width: 600px;
-          margin: 0 auto;
-          background-color: white;
-          border-radius: 10px;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-          overflow: hidden; /* Prevent overflow issues */
-        }
-
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 10px 20px;
-          border-bottom: 1px solid #eee;
-        }
-
-        .header h1 {
-          margin: 0;
-          font-size: 1.5em;
-        }
-
-        .close {
-          cursor: pointer;
-          font-size: 1.2em;
-        }
-
-        .messages {
-          flex: 1;
-          overflow-y: auto;
-          padding: 20px;
-        }
-
-        .message-container {
-          display: flex;
-          margin-bottom: 15px;
-        }
-
-        .avatar {
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-right: 10px;
-          background-color: #ccc;
-        }
-
-        .elia-avatar {
-          background-color: #007bff;
-          color: white;
-        }
-
-        .user-avatar {
-          background-color: #28a745;
-          color: white;
-        }
-
-        .message {
-          max-width: 70%;
-          padding: 10px;
-          border-radius: 5px;
-        }
-
-        .elia {
-          background-color: #e9f0fa;
-          align-self: flex-start;
-        }
-
-        .user {
-          background-color: #d4edda;
-          align-self: flex-end;
-        }
-
-        .user-label {
-          font-weight: bold;
-          margin-right: 5px;
-        }
-
-        .timestamp {
-          display: block;
-          font-size: 0.8em;
-          color: #666;
-          margin-top: 5px;
-        }
-
-        .loading-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-        }
-
-        .spinner {
-          width: 40px;
-          height: 40px;
-          border: 4px solid #f3f3f3;
-          border-top: 4px solid #007bff;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        .input-area {
-          display: flex;
-          padding: 10px;
-          border-top: 1px solid #eee;
-          background-color: #fff;
-          width: 100%; /* Ensure full width */
-          box-sizing: border-box; /* Include padding in width */
-        }
-
-        .input-area input {
-          flex: 1;
-          padding: 10px;
-          border: 1px solid #ccc;
-          border-radius: 5px;
-          margin-right: 10px;
-          box-sizing: border-box; /* Include padding in width */
-        }
-
-        .image-input {
-          cursor: pointer;
-          padding: 5px;
-          border: 1px solid #ccc;
-          border-radius: 5px;
-          background-color: #e0e0e0;
-          box-sizing: border-box; /* Include padding in width */
-        }
-
-        .voice-button {
-          padding: 5px;
-          border: none;
-          border-radius: 5px;
-          background-color: #e0e0e0;
-          cursor: pointer;
-          margin-right: 10px;
-          box-sizing: border-box; /* Include padding in width */
-        }
-
-        .voice-button:hover {
-          background-color: #d0d0d0;
-        }
-
-        .send-button {
-          padding: 10px 20px;
-          background-color: #007bff;
-          color: white;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          box-sizing: border-box; /* Include padding in width */
-        }
-
-        .send-button:hover {
-          background-color: #0056b3;
-        }
-
-        .suggest-button {
-          margin-top: 10px;
-          padding: 5px 10px;
-          background-color: #28a745;
-          color: white;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-        }
-
-        .suggest-button:hover {
-          background-color: #218838;
-        }
-
-        .nav-bar {
-          display: flex;
-          justify-content: space-around;
-          padding: 10px;
-          background-color: #f8f9fa;
-          border-top: 1px solid #eee;
-          position: fixed;
-          bottom: 0;
-          width: 100%;
-          max-width: 600px;
-          margin: 0 auto;
-        }
-
-        .nav-item {
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-size: 1.2em;
-          color: #333;
-        }
-
-        .nav-item.active {
-          color: #007bff;
-        }
-      `}</style>
     </div>
   );
 }
