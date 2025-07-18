@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 
@@ -159,28 +159,8 @@ function EliaApp() {
   };
 
   useEffect(() => {
-    const now = new Date();
-    const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     if (!isChatVisible) {
       setMessages([]);
-    } else {
-      const initialMessages = [
-        { user: 'ELIA', text: 'Hello, Ryan! I’m ELIA, your professional health companion. Ready to optimize your wellness journey? 🌿', time: timestamp },
-        { user: 'ELIA', text: 'Ask me about exercises, diet, or upload an image for advice. Let’s get started! ⏰', time: timestamp }
-      ];
-      setMessages(initialMessages);
-      fetchInitialMessagesAudio(initialMessages[0].text).then((responseText) => {
-        setMessages((prev) => [
-          { ...prev[0], text: responseText },
-          prev[1]
-        ]);
-      });
-      fetchInitialMessagesAudio(initialMessages[1].text).then((responseText) => {
-        setMessages((prev) => [
-          prev[0],
-          { ...prev[1], text: responseText }
-        ]);
-      });
     }
   }, [isChatVisible]);
 
@@ -243,7 +223,7 @@ function EliaApp() {
                     <span className="user-label">{msg.user}</span>
                     <p>{msg.text}</p>
                     <span className="timestamp">{msg.time}</span>
-                    {msg.user === 'ELIA' && index === 1 && (
+                    {msg.user === 'ELIA' && index === messages.length - 1 && (
                       <button className="suggest-button" onClick={() => {
                         const now = new Date();
                         const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -302,3 +282,258 @@ function EliaApp() {
 }
 
 export default EliaApp;
+```
+
+#### App.css
+Update the CSS to fix the UI alignment, assuming a centered layout with a fixed nav-bar and properly spaced input buttons based on a typical initial design.
+
+<xaiArtifact artifact_id="50e90b36-5081-42d3-bdef-6e27a2f1d27e" artifact_version_id="a55eaecb-ff3f-4a87-85fb-a4f27aa9aeaa" title="App.css" contentType="text/css">
+```css
+.app {
+  font-family: Arial, sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #f5f5f5;
+}
+
+.landing-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  text-align: center;
+  padding: 20px;
+}
+
+.landing-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.input-buttons {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.landing-input {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  transition: background-color 0.3s;
+}
+
+.landing-input:hover {
+  background-color: #d0d0d0;
+}
+
+.voice-button.recording {
+  background-color: #ff4444;
+}
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.close {
+  cursor: pointer;
+  font-size: 1.2em;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.message-container {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  background-color: #ccc;
+}
+
+.elia-avatar {
+  background-color: #007bff;
+  color: white;
+}
+
+.user-avatar {
+  background-color: #28a745;
+  color: white;
+}
+
+.message {
+  max-width: 70%;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.elia {
+  background-color: #e9f0fa;
+  align-self: flex-start;
+}
+
+.user {
+  background-color: #d4edda;
+  align-self: flex-end;
+}
+
+.user-label {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.timestamp {
+  display: block;
+  font-size: 0.8em;
+  color: #666;
+  margin-top: 5px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.input-area {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #eee;
+  background-color: #fff;
+}
+
+.input-area input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+
+.image-input {
+  cursor: pointer;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #e0e0e0;
+}
+
+.voice-button {
+  padding: 5px;
+  border: none;
+  border-radius: 5px;
+  background-color: #e0e0e0;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.voice-button:hover {
+  background-color: #d0d0d0;
+}
+
+.send-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.send-button:hover {
+  background-color: #0056b3;
+}
+
+.suggest-button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.suggest-button:hover {
+  background-color: #218838;
+}
+
+.nav-bar {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #eee;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2em;
+  color: #333;
+}
+
+.nav-item.active {
+  color: #007bff;
+}
