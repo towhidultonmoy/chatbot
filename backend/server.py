@@ -307,7 +307,7 @@ play_speech = True
 same_model_id = "eleven_multilingual_v2"
 VOICE_PROFILES = {
     "Empathetic": {
-        "voice_id": "g6xIsTj2HwM6VR4iXFCw",
+        "voice_id": "2qfp6zPuviqeCOZIE9RZ",        # Christina - Calming Yoga Instructor for ELIA
         "model_id": same_model_id
     },
     "Professional": {
