@@ -154,7 +154,7 @@ function EliaApp() {
   };
 
   const handleTextInputClick = () => {
-    console.log('Text input clicked, showing chat');
+    console.log('Text input clicked, setting isChatVisible to true');
     setIsChatVisible(true);
   };
 
@@ -162,6 +162,7 @@ function EliaApp() {
     if (!isChatVisible) {
       setMessages([]);
     }
+    console.log('isChatVisible:', isChatVisible); // Debug state change
   }, [isChatVisible]);
 
   return (
@@ -337,6 +338,7 @@ function EliaApp() {
           background-color: white;
           border-radius: 10px;
           box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          overflow: hidden; /* Prevent overflow issues */
         }
 
         .header {
@@ -444,6 +446,8 @@ function EliaApp() {
           padding: 10px;
           border-top: 1px solid #eee;
           background-color: #fff;
+          width: 100%; /* Ensure full width */
+          box-sizing: border-box; /* Include padding in width */
         }
 
         .input-area input {
@@ -452,6 +456,7 @@ function EliaApp() {
           border: 1px solid #ccc;
           border-radius: 5px;
           margin-right: 10px;
+          box-sizing: border-box; /* Include padding in width */
         }
 
         .image-input {
@@ -460,6 +465,7 @@ function EliaApp() {
           border: 1px solid #ccc;
           border-radius: 5px;
           background-color: #e0e0e0;
+          box-sizing: border-box; /* Include padding in width */
         }
 
         .voice-button {
@@ -469,6 +475,7 @@ function EliaApp() {
           background-color: #e0e0e0;
           cursor: pointer;
           margin-right: 10px;
+          box-sizing: border-box; /* Include padding in width */
         }
 
         .voice-button:hover {
@@ -482,6 +489,7 @@ function EliaApp() {
           border: none;
           border-radius: 5px;
           cursor: pointer;
+          box-sizing: border-box; /* Include padding in width */
         }
 
         .send-button:hover {
